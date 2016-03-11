@@ -1,0 +1,2 @@
+%{"roombex": {:hex, :roombex, "0.0.4"},
+  "serial": {:hex, :serial, "0.1.2"}}
