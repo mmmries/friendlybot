@@ -19,7 +19,9 @@ client = Twitter::REST::Client.new do |config|
   config.access_token_secret = ENV["TWITTER_ACCESS_TOKEN_SECRET"]
 end
 
-client.update("I'm tweeting with @gem!")
+File.open("/Users/hqmq/Downloads/latest_face.jpg", "rb") do |fh|
+  client.update_with_media("This guy...", fh)
+end
 
 loop do
   tell_wanderer("ohai")
