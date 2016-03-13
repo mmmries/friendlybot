@@ -1,3 +1,4 @@
 .bundle
 .api_keys
 .google_creds.json
+.env
