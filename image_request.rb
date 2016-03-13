@@ -1,5 +1,7 @@
-#api_key = "AIzaSyAiRuLBU1Z2gDuULRgRNvfXBEO90cTBFV4"
-api_key = "AIzaSyDCqBET4wUKxwOeSoYxD_CYwnUoZhYQFvI"
+require "bundler/setup"
+Bundler.require
+Dotenv.load
+api_key = ENV["GOOGLE_API_KEY"]
 require "base64"
 require 'net/http'
 require 'json'
