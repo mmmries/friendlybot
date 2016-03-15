@@ -3,6 +3,7 @@ require "bundler/setup"
 Bundler.require
 Dotenv.load
 
+require_relative "../lib/analyzer"
 require "securerandom"
 require "socket"
 require './lib/face_picker'
@@ -14,6 +15,8 @@ frame = Spyglass::Image.new
 $capture >> frame
 $width = frame.cols
 $height = frame.rows
+MIN_WIDTH = $width / 4
+MIN_HEIGHT = $height / 3
 
 $client = Twitter::REST::Client.new do |config|
   config.consumer_key        = ENV["TWITTER_CONSUMER_KEY"]
@@ -27,7 +30,8 @@ def look_for_a_face
   frame = Spyglass::Image.new
   loop do
     $capture >> frame
-    rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new($width / 3, $height / 3))
+    print "."
+    rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new(MIN_WIDTH, MIN_HEIGHT))
     rect = FacePicker.new.pick(rects)
     break if rect
   end
@@ -36,11 +40,17 @@ end
 def process_frame(frame, rect)
   puts "I am going to analyaze this face!"
   filepath = File.join(ENV["PICTURES_DIR"], "#{SecureRandom.uuid}.jpg")
-  #rect = scale_rect(rect, 1.5)
-  frame = frame.crop(rect)
+  # rect = scale_rect(rect, 1.5)
+  # frame = frame.crop(rect)
   frame.write(filepath)
-  File.open(filepath, "rb") do |fh|
-    $client.update_with_media("This guy...", fh)
+  analyzer = Analyzer.new(filepath)
+  if analyzer.blurry?
+    puts "...nevermind, this picture sucks"
+    return nil
+  else
+    File.open(filepath, "rb") do |fh|
+      $client.update_with_media("This guy is #{analyzer.expression}", fh)
+    end
   end
   File.unlink(filepath)
 end
@@ -66,7 +76,7 @@ def try_to_pick_good_frame
   frame = Spyglass::Image.new
   100.times do
     $capture >> frame
-    rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new($width/3, $height/3))
+    rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new(MIN_WIDTH, MIN_HEIGHT))
     rect = FacePicker.new.pick(rects)
     return [frame, rect] if rect
   end
