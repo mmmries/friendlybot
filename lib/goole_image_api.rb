@@ -11,15 +11,15 @@ module GoogleImageAPI
     content_type = "Content-Type: application/json"
     url = "https://vision.googleapis.com/v1/images:annotate?key=#{api_key}"
     data = {
-      "requests": [
+      "requests" => [
         {
-          "image": {
-            "content": b64_data
+          "image" => {
+            "content" => b64_data
           },
-          "features": [
+          "features" => [
             {
-              "type": "FACE_DETECTION",
-              "maxResults": 1
+              "type" => "FACE_DETECTION",
+              "maxResults" => 1
             }
           ]
         }
