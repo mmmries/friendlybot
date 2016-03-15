@@ -3,14 +3,18 @@ require "bundler/setup"
 Bundler.require
 Dotenv.load
 
+require "securerandom"
 require "socket"
+require './lib/face_picker'
 
 $udp = UDPSocket.new
-
-def tell_wanderer(msg)
-  $udp.send msg, 0, "127.0.0.1", 10_000
-end
-
+$classifier  = Spyglass::CascadeClassifier.new("./haarcascade_frontalface_default.xml")
+$capture = Spyglass::VideoCapture.new 0
+$window = Spyglass::GUI::Window.new "Video"
+frame = Spyglass::Image.new
+$capture >> frame
+$width = frame.cols
+$height = frame.rows
 
 client = Twitter::REST::Client.new do |config|
   config.consumer_key        = ENV["TWITTER_CONSUMER_KEY"]
@@ -19,13 +23,67 @@ client = Twitter::REST::Client.new do |config|
   config.access_token_secret = ENV["TWITTER_ACCESS_TOKEN_SECRET"]
 end
 
-File.open("/Users/hqmq/Downloads/latest_face.jpg", "rb") do |fh|
-  client.update_with_media("This guy...", fh)
+def look_for_a_face
+  puts "looking for a face"
+  frame = Spyglass::Image.new
+  loop do
+    $capture >> frame
+    $window.show(frame)
+    rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new($width / 3, $height / 3))
+    rect = FacePicker.new.pick(rects)
+    break if rect
+  end
+end
+
+def process_frame(frame, rect)
+  puts "I am going to analyaze this face!"
+  filepath = File.join(ENV["PICTURES_DIR"], "#{SecureRandom.uuid}.jpg")
+  #rect = scale_rect(rect, 1.5)
+  frame = frame.crop(rect)
+  frame.write(filepath)
+  #File.open("/Users/hqmq/Downloads/latest_face.jpg", "rb") do |fh|
+  #  client.update_with_media("This guy...", fh)
+  #end
+end
+
+def scale_rect(rect, scale)
+  width = (rect.width * scale).round
+  height = (rect.height * scale).round
+  cx = rect.point.x + (rect.width / 2)
+  cy = rect.point.y + (rect.height / 2)
+  x = (cx - (width / 2)).round
+  y = (cy - (height / 2)).round
+  Spyglass::Rect.new(x, y, width, height)
+end
+
+def tell_wanderer(msg)
+  puts "telling wanderer #{msg}"
+  $udp.send msg, 0, "127.0.0.1", 10_000
+end
+
+def try_to_pick_good_frame
+  sleep 1.0 # give a moment for the subject to freeze in frame
+  puts "trying to pick a good frame"
+  frame = Spyglass::Image.new
+  100.times do
+    $capture >> frame
+    $window.show(frame)
+    rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new($width/3, $height/3))
+    rect = FacePicker.new.pick(rects)
+    return [frame, rect] if rect
+  end
+  nil
 end
 
 loop do
-  tell_wanderer("ohai")
-  sleep 2.0
-  tell_wanderer("Yo")
-  sleep 2.0
+  tell_wanderer("go")
+  look_for_a_face
+  tell_wanderer("stop")
+  frame, rect = try_to_pick_good_frame
+  if frame
+    process_frame(frame, rect)
+    tell_wanderer("sing")
+    tell_wanderer("go")
+    sleep 10.0
+  end
 end
