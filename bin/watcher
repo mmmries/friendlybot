@@ -10,13 +10,12 @@ require './lib/face_picker'
 $udp = UDPSocket.new
 $classifier  = Spyglass::CascadeClassifier.new("./haarcascade_frontalface_default.xml")
 $capture = Spyglass::VideoCapture.new 0
-$window = Spyglass::GUI::Window.new "Video"
 frame = Spyglass::Image.new
 $capture >> frame
 $width = frame.cols
 $height = frame.rows
 
-client = Twitter::REST::Client.new do |config|
+$client = Twitter::REST::Client.new do |config|
   config.consumer_key        = ENV["TWITTER_CONSUMER_KEY"]
   config.consumer_secret     = ENV["TWITTER_CONSUMER_SECRET"]
   config.access_token        = ENV["TWITTER_ACCESS_TOKEN"]
@@ -28,7 +27,6 @@ def look_for_a_face
   frame = Spyglass::Image.new
   loop do
     $capture >> frame
-    $window.show(frame)
     rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new($width / 3, $height / 3))
     rect = FacePicker.new.pick(rects)
     break if rect
@@ -41,9 +39,10 @@ def process_frame(frame, rect)
   #rect = scale_rect(rect, 1.5)
   frame = frame.crop(rect)
   frame.write(filepath)
-  #File.open("/Users/hqmq/Downloads/latest_face.jpg", "rb") do |fh|
-  #  client.update_with_media("This guy...", fh)
-  #end
+  File.open(filepath, "rb") do |fh|
+    $client.update_with_media("This guy...", fh)
+  end
+  File.unlink(filepath)
 end
 
 def scale_rect(rect, scale)
@@ -67,7 +66,6 @@ def try_to_pick_good_frame
   frame = Spyglass::Image.new
   100.times do
     $capture >> frame
-    $window.show(frame)
     rects = $classifier.detect(frame, scale_factor: 1.5, min_size: Spyglass::Size.new($width/3, $height/3))
     rect = FacePicker.new.pick(rects)
     return [frame, rect] if rect
