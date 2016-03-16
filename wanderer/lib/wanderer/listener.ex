@@ -19,9 +19,8 @@ defmodule Wanderer.Listener do
     loop(socket)
   end
 
-  defp handle_udp("ohai") do
-    Logger.debug("Yo Dawg!")
-  end
+  defp handle_udp("go"), do: GenServer.cast(Wanderer.DJ, :go)
+  defp handle_udp("stop"), do: GenServer.cast(Wanderer.DJ, :stop)
   defp handle_udp(msg) do
     Logger.debug("??? #{msg}")
   end
