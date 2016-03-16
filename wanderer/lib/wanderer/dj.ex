@@ -1,6 +1,12 @@
 defmodule Wanderer.DJ do
   use GenServer
   require Logger
+  @wandering_speed 100
+  @backup_speed -50
+  @tight_turn_right -50
+  @tight_turn_left 50
+  @loose_turn_right -70
+  @loose_turn_left 70
 
   def start_link do
     GenServer.start_link(__MODULE__, [], [name: __MODULE__])
@@ -13,23 +19,58 @@ defmodule Wanderer.DJ do
       report_to: self(),
     ]
     {:ok, pid} = Roombex.DJ.start_link(opts, [name: :dj])
-    {:ok, %{dj_pid: pid, roomba: Roombex.State}}
+    {:ok, %{dj_pid: pid, roomba: Roombex.State, wandering: true}}
+  end
+
+  def handle_cast(:go, state) do
+    drive(@wandering_speed, 0)
+    {:noreply, %{state | wandering: true}}
+  end
+  def handle_cast(:stop, state) do
+    drive(0, 0)
+    {:noreply, %{state | wandering: false}}
   end
 
   def handle_info({:roomba_status, roomba}, state) do
-    sensor_change(state.roomba, roomba)
-    {:noreply, %{state | roomba: roomba}}
+    state = %{state | roomba: roomba}
+    update_drive(state)
+    {:noreply, state}
   end
   def handle_info(msg, state) do
     Logger.debug "unexpected message #{inspect msg}"
     {:noreply, state}
   end
 
-  def sensor_change(%{button_hour: 0}, %{button_hour: 1}) do
-    Logger.debug "hour button pressed"
+  defp update_drive(%{wandering: false}), do: nil
+  defp update_drive(%{roomba: roomba}) do
+    react_to(roomba)
   end
-  def sensor_change(%{button_hour: 0}, %{button_hour: 1}) do
-    Logger.debug "hour button released"
+
+  defp drive(velocity, radius) do
+    Roombex.DJ.command(:dj, Roombex.drive(velocity, radius))
   end
-  def sensor_change(_old, _new), do: nil
+
+  defp on_the_left?(%{light_bumper_left: 1}), do: true
+  defp on_the_left?(%{light_bumper_left_front: 1}), do: true
+  defp on_the_left?(_), do: false
+
+  defp on_the_right?(%{light_bumper_right: 1}), do: true
+  defp on_the_right?(%{light_bumper_right_front: 1}), do: true
+  defp on_the_right?(_), do: false
+
+  defp react_to(%{bumper_left: 1, bumper_right: 1}), do: drive(@backup_speed, 0)
+  defp react_to(%{bumper_left: 1, bumper_right: 0}), do: drive(@backup_speed, @tight_turn_left)
+  defp react_to(%{bumper_left: 0, bumper_right: 1}), do: drive(@backup_speed, @tight_turn_right)
+  defp react_to(sensors) do
+    cond do
+      up_front?(sensors) -> drive(div(@wandering_speed, 3), @tight_turn_right)
+      on_the_left?(sensors) -> drive(div(@wandering_speed, 2), @loose_turn_right)
+      on_the_right?(sensors) -> drive(div(@wandering_speed, 2), @loose_turn_left)
+      true -> drive(@wandering_speed,0)
+    end
+  end
+
+  defp up_front?(%{light_bumper_left_center: 1}), do: true
+  defp up_front?(%{light_bumper_right_center: 1}), do: true
+  defp up_front?(_), do: false
 end
