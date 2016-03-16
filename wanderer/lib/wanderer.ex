@@ -10,6 +10,7 @@ defmodule Wanderer do
       # Define workers and child supervisors to be supervised
       # worker(Wanderer.Worker, [arg1, arg2, arg3]),
       worker(Wanderer.Listener, []),
+      worker(Wanderer.DJ, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
