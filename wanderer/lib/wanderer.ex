@@ -11,6 +11,7 @@ defmodule Wanderer do
       # worker(Wanderer.Worker, [arg1, arg2, arg3]),
       worker(Wanderer.Listener, []),
       worker(Wanderer.DJ, []),
+      worker(Wanderer.SensorChecker, []),
     ]
 
     # See http://elixir-lang.org/docs/stable/elixir/Supervisor.html
