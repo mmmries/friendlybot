@@ -54,6 +54,17 @@ Here we have setup two different WiFi credentials.
 The `development_wifi` will be preferred (higher priority) and the `pifi` network will be used when that is unavailable.
 Now on your raspberry-pi terminal you can run `sudo ifup wlan0` and it should load the configuration and try to connect to the wifi.
 
+__Disable WiFi Sleeping__
+
+[From a forum discussion](https://www.raspberrypi.org/forums/viewtopic.php?t=61665)
+
+Create a file called `/etc/modprobe.d/8192cu.conf` and give it the contents
+
+```
+# Disable power management
+options 8192cu rtw_power_mgnt=0 rtw_enusbss=0
+```
+
 __Install Erlang, Elixir, OpenCV, and Ruby__
 
 Run all of these commands as `root`:
