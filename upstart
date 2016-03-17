@@ -1,0 +1,8 @@
+start on started wanderer
+stop on stopped wanderer
+
+script
+  cd /opt/friendlybot
+  export HOME=/root
+  ruby2.1 bin/watcher
+end script

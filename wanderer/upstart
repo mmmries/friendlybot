@@ -1,0 +1,11 @@
+start on runlevel [2345]
+stop on runlevel[!2345]
+
+script
+  cd /opt/friendlybot/wanderer
+  export HOME=/root
+  export MIX_ENV=prod
+  export LC_CTYPE=en_US.UTF-8
+  export PATH=/opt/elixir-1.2.3/bin:/root/.mix/:$PATH
+  elixir --sname friendlybot --cookie pi --no-halt -S mix
+end script
