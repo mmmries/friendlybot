@@ -28,7 +28,12 @@ defmodule Wanderer.DJ do
   end
   def handle_cast(:stop, state) do
     drive(0, 0)
+    Roombex.DJ.command(:dj, Roombex.play(0))
     {:noreply, %{state | wandering: false}}
+  end
+  def handle_cast(:sing, state) do
+    Roombex.DJ.command(:dj, Roombex.play(1))
+    {:noreply, state}
   end
 
   def handle_info({:roomba_status, roomba}, state) do
