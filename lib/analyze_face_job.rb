@@ -7,9 +7,11 @@ class AnalyzeFaceJob
   PHRASES = {
     :anger => [
       "Chill out. No reason to get mad.",
+      "Calm down, the garbage collector will clean up soon",
     ],
     :joy => [
       "Must have just watched a kitten video.",
+      "Test suite just went green!",
     ],
     :sorrow => [
       "Cheer up friend",
