@@ -19,6 +19,7 @@ defmodule Wanderer.Listener do
     loop(socket)
   end
 
+  defp handle_udp("cancel"), do: GenServer.cast(Wanderer.DJ, :cancel)
   defp handle_udp("go"), do: GenServer.cast(Wanderer.DJ, :go)
   defp handle_udp("stop"), do: GenServer.cast(Wanderer.DJ, :stop)
   defp handle_udp("sing"), do: GenServer.cast(Wanderer.DJ, :sing)

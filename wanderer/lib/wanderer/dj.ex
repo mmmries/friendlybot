@@ -31,6 +31,10 @@ defmodule Wanderer.DJ do
     Roombex.DJ.command(:dj, Roombex.play(0))
     {:noreply, %{state | wandering: false}}
   end
+  def handle_cast(:cancel, state) do
+    Roombex.DJ.command(:dj, Roombex.play(2))
+    {:noreply, state}
+  end
   def handle_cast(:sing, state) do
     Roombex.DJ.command(:dj, Roombex.play(1))
     {:noreply, state}

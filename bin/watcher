@@ -46,7 +46,7 @@ def tell_wanderer(msg)
 end
 
 def try_to_pick_good_frame
-  sleep 1.0 # give a moment for the subject to freeze in frame
+  sleep 1.5 # give a moment for the subject to freeze in frame
   puts "trying to pick a good frame"
   frame = Spyglass::Image.new
   100.times do
@@ -68,5 +68,9 @@ loop do
     tell_wanderer("sing")
     tell_wanderer("go")
     sleep 10.0
+  else
+    tell_wanderer("cancel")
+    tell_wanderer("go")
+    sleep 2.0
   end
 end
